@@ -1,0 +1,31 @@
+[Unit]
+Description=Named network namespace %I
+Documentation=https://github.com/openstack/ansible-role-systemd_service
+After=syslog.target network.target systemd-netns@%i.service
+Before=%i.service
+BindsTo=systemd-netns@%i.service
+
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+
+# Create system process
+ExecStartPre=-/usr/bin/env ip link add mv-int link ${GATEWAY_DEVICE} type macvlan mode bridge
+ExecStartPre=-/usr/bin/env ip link set mv-int up
+ExecStartPre=-/usr/bin/env sysctl -w net.ipv4.ip_forward=1
+
+# Pivot link
+ExecStart=/usr/bin/env ip link add mv0 link mv-int type macvlan mode bridge
+ExecStart=/usr/bin/env ip link set mv0 netns %i name mv0
+
+# Configure link
+ExecStart=-/usr/bin/env ip netns exec %i ip link set lo up
+ExecStart=-/usr/bin/env ip netns exec %i ip link set dev mv0 up
+ExecStop=/usr/bin/env if [[ -e "/usr/local/bin/ns-%i" ]]; then bash /usr/local/bin/ns-%i start %i; fi
+
+ExecStop=/usr/bin/env if [[ -e "/usr/local/bin/ns-%i" ]]; then bash /usr/local/bin/ns-%i stop; fi
+
+[Install]
+WantedBy=multi-user.target
+WantedBy=network-online.target

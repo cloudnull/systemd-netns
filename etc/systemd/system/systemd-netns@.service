@@ -1,0 +1,26 @@
+[Unit]
+Description=Named network namespace %i
+Documentation=https://github.com/openstack/ansible-role-systemd_service
+JoinsNamespaceOf=systemd-netns@%i.service
+BindsTo=systemd-netns-access@%i.service
+PartOf=%i.service
+After=syslog.target network.target systemd-netns@%i.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+PrivateNetwork=true
+
+# Start process
+ExecStartPre=-/usr/bin/env ip netns delete %I
+ExecStart=/usr/bin/env ip netns add %I
+ExecStart=/usr/bin/env ip netns exec %I ip link set lo up
+ExecStart=/usr/bin/env umount /var/run/netns/%I
+ExecStart=/usr/bin/env mount --bind /proc/self/ns/net /var/run/netns/%I
+
+# Stop process
+ExecStop=/usr/bin/env ip netns delete %I
+
+[Install]
+WantedBy=multi-user.target
+WantedBy=network-online.target

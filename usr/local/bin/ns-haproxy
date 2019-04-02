@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+
+function start {
+  /usr/bin/env ip netns exec $2 sysctl -w net.ipv4.conf.mv0.forwarding=1
+  /usr/bin/env ip netns exec $2 sysctl -w net.ipv4.conf.mv0.arp_notify=1
+  /usr/bin/env ip netns exec $2 sysctl -w net.ipv4.conf.mv0.arp_announce=2
+  /usr/bin/env ip netns exec $2 sysctl -w net.ipv4.conf.mv0.use_tempaddr=0
+  /usr/bin/env ip netns exec $2 ip address add 172.16.26.1/22 dev mv0
+  /usr/bin/env ip netns exec $2 ip address add 172.16.26.2/22 dev mv0
+  /usr/bin/env ip route add 172.16.26.1/32 dev mv-int metric 100 table local
+  /usr/bin/env ip route add 172.16.26.2/32 dev mv-int metric 100 table local
+}
+
+
+function stop {
+  /usr/bin/env ip route del 172.16.26.1/32 dev mv-int metric 100 table local
+  /usr/bin/env ip route del 172.16.26.2/32 dev mv-int metric 100 table local
+}
+
+
+case "$1" in
+   start)
+      start
+   ;;
+   stop)
+      stop
+   ;;
+   restart)
+      stop
+      start
+   ;;
+   *)
+      echo "Usage: $0 {start|stop|restart}"
+esac
