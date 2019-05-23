@@ -8,5 +8,5 @@ This example repository is setup to run haproxy from within a
 namespace however nothing in the systemd service units is bound to
 only haproxy.
 
-See https://cloudnull.io/running-services-in-network-name-spaces-with-systemd/
+See https://cloudnull.io/2019/04/running-services-in-network-name-spaces-with-systemd/
 for more details on how these files are used.
